@@ -9,7 +9,9 @@ from model import run_sir
 from celery import Celery, group
 import subprocess
 
-app = Celery('code', include=['t4_celery'])
+print(__file__)
+
+app = Celery('t4_celery', backend='rpc://', broker='pyamqp://guest@localhost//')
 app.conf['CELERY_TASK_SERIALIZER'] = 'pickle'
 app.conf['CELERY_RESULT_SERIALIZER'] = 'pickle'
 app.conf['CELERY_ACCEPT_CONTENT'] = ['json', 'pickle']
@@ -29,13 +31,20 @@ if __name__ == '__main__':
 
     # Run
     sc.tic()
-    celery_cmdline = f'celery worker -A t4_celery -l INFO -c {n_runs}'.split(' ')
+    celery_cmdline = 'celery -A t4_celery worker --loglevel=INFO'.split(' ')
     subprocess.Popen(celery_cmdline)
     inputlist = [(seed,beta) for seed,beta in zip(seeds, betas)]
-    jobs = group(run_celery.s(arg) for arg in inputlist)
-    sirlist = jobs.apply_async()
+    jobs = []
+    for arg in inputlist:
+        jobs.append(run_celery.delay(arg))
     # worker = app.Worker(include=['t4_celery'])
-    # app.start()
+    # worker.start()
+    sirlist = []
+    for job in jobs:
+        if job.ready():
+            sirlist.append(job.get())
+        else:
+            sc.timedsleep(1)
     sc.toc()
 
     # Plot
