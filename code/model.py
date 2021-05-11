@@ -72,10 +72,10 @@ class SIR(sc.prettyobj):
         return fig
 
 
-def run_sir(*args, **kwargs):
+def run_sir(**kwargs):
     ''' Helper function to run the SIR model '''
-    print(f'Running {args} {kwargs}...')
-    sir = SIR(*args, **kwargs)
+    print(f'Running {kwargs}...')
+    sir = SIR(**kwargs)
     sir.run()
     return sir
 

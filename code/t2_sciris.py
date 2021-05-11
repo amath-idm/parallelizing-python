@@ -2,8 +2,8 @@
 Tool 2: Sciris
 '''
 
-import numpy as np
 import pylab as pl
+import numpy as np
 import sciris as sc
 from model import run_sir
 

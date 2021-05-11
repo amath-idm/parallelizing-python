@@ -1,15 +1,21 @@
 '''
-Tool 1: multiprocessing
+Tool 4: celery
 '''
 
 import pylab as pl
 import numpy as np
 import sciris as sc
 from model import run_sir
-import multiprocessing as mp
+from celery import Celery, group
+import subprocess
 
+app = Celery('code', include=['t4_celery'])
+app.conf['CELERY_TASK_SERIALIZER'] = 'pickle'
+app.conf['CELERY_RESULT_SERIALIZER'] = 'pickle'
+app.conf['CELERY_ACCEPT_CONTENT'] = ['json', 'pickle']
 
-def run_multiprocessing(args):
+@app.task
+def run_celery(args):
     seed, beta = args
     sir = run_sir(seed=seed, beta=beta)
     return sir
@@ -23,11 +29,13 @@ if __name__ == '__main__':
 
     # Run
     sc.tic()
+    celery_cmdline = f'celery worker -A t4_celery -l INFO -c {n_runs}'.split(' ')
+    subprocess.Popen(celery_cmdline)
     inputlist = [(seed,beta) for seed,beta in zip(seeds, betas)]
-    multipool = mp.Pool(processes=mp.cpu_count())
-    sirlist = multipool.map(run_multiprocessing, inputlist)
-    multipool.close()
-    multipool.join()
+    jobs = group(run_celery.s(arg) for arg in inputlist)
+    sirlist = jobs.apply_async()
+    # worker = app.Worker(include=['t4_celery'])
+    # app.start()
     sc.toc()
 
     # Plot

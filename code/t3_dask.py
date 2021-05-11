@@ -1,11 +1,18 @@
 '''
-Tool 0: Run in serial
+Tool 3: Dask
 '''
 
 import pylab as pl
 import numpy as np
 import sciris as sc
 from model import run_sir
+import dask
+from dask.distributed import Client
+
+
+def run_dask(seed, beta):
+    sir = run_sir(seed=seed, beta=beta)
+    return sir
 
 if __name__ == '__main__':
 
@@ -16,10 +23,12 @@ if __name__ == '__main__':
 
     # Run
     sc.tic()
-    sirlist = []
+    client = Client(n_workers=n_runs)
+    queued = []
     for r in range(n_runs):
-        sir = run_sir(seed=seeds[r], beta=betas[r])
-        sirlist.append(sir)
+        run = dask.delayed(run_dask)(seeds[r], betas[r])
+        queued.append(run)
+    sirlist = list(dask.compute(*queued))
     sc.toc()
 
     # Plot
@@ -29,4 +38,4 @@ if __name__ == '__main__':
         pl.plot(sirlist[0].tvec, sirlist[r].I, c=colors[r], label=f'beta={betas[r]:0.2g}')
     pl.legend()
     pl.show()
-    pl.savefig('example-serial.png', dpi=300)
+    pl.savefig('example-multiprocessing.png', dpi=300)
