@@ -1,20 +1,18 @@
 '''
-Tool 4: celery
+Tool 4: Celery
 '''
 
 import pylab as pl
 import numpy as np
 import sciris as sc
 from model import run_sir
-from celery import Celery, group
+from celery import Celery
 import subprocess
 
-print(__file__)
-
 app = Celery('t4_celery', backend='rpc://', broker='pyamqp://guest@localhost//')
-app.conf['CELERY_TASK_SERIALIZER'] = 'pickle'
-app.conf['CELERY_RESULT_SERIALIZER'] = 'pickle'
-app.conf['CELERY_ACCEPT_CONTENT'] = ['json', 'pickle']
+app.conf['task_serializer'] = 'pickle'
+app.conf['result_serializer'] = 'pickle'
+app.conf['accept_content'] = ['json', 'pickle']
 
 @app.task
 def run_celery(args):
@@ -37,14 +35,12 @@ if __name__ == '__main__':
     jobs = []
     for arg in inputlist:
         jobs.append(run_celery.delay(arg))
-    # worker = app.Worker(include=['t4_celery'])
-    # worker.start()
     sirlist = []
     for job in jobs:
-        if job.ready():
-            sirlist.append(job.get())
-        else:
+        while not job.ready():
             sc.timedsleep(1)
+        else:
+            sirlist.append(job.get())
     sc.toc()
 
     # Plot
@@ -54,4 +50,4 @@ if __name__ == '__main__':
         pl.plot(sirlist[0].tvec, sirlist[r].I, c=colors[r], label=f'beta={betas[r]:0.2g}')
     pl.legend()
     pl.show()
-    pl.savefig('example-multiprocessing.png', dpi=300)
+    pl.savefig('example-celery.png', dpi=300)
