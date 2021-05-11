@@ -5,7 +5,7 @@ Tool 1: multiprocessing
 import numpy as np
 import pylab as pl
 import sciris as sc
-import multiprocess as mp
+import multiprocessing as mp
 from model import run_sir
 
 def run_multiprocessing(args):

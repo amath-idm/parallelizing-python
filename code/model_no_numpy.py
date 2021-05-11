@@ -33,30 +33,28 @@ class SIR(sc.prettyobj):
 
     def initialize(self):
         np.random.seed(self.seed)
-        self.S = np.full(self.npts+1, np.nan)
-        self.I = np.full(self.npts+1, np.nan)
-        self.R = np.full(self.npts+1, np.nan)
-        self.S[0] = self.N-1
-        self.I[0] = 1
+        self.S = [self.N-1]
+        self.I = [1]
+        self.R = [0]
         self.tvec = np.arange(self.npts+1)
         return
 
 
     def run(self):
-        r_beta  = self.noise*np.random.randn(self.npts)
-        r_gamma = self.noise*np.random.randn(self.npts)
+        r1 = self.noise*np.random.randn(self.npts)
+        r2 = self.noise*np.random.randn(self.npts)
         for t in np.arange(self.npts):
-            S = self.S[t]
-            I = self.I[t]
-            R = self.R[t]
-            infections = self.beta*S*I/self.N*(1 + r_beta[t])
-            recoveries = self.gamma*I*(1 + r_gamma[t])
+            S = self.S[-1]
+            I = self.I[-1]
+            R = self.R[-1]
+            infections = self.beta*S*I/self.N*(1 + r1[t])
+            recoveries = self.gamma*I*(1 + r2[t])
             S = S - infections
             I = I + infections - recoveries
             R = R + recoveries
-            self.S[t+1] = S
-            self.I[t+1] = I
-            self.R[t+1] = R
+            self.S.append(S)
+            self.I.append(I)
+            self.R.append(R)
         return
 
 
